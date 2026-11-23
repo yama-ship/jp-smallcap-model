@@ -44,7 +44,8 @@ metrics: []          # 評価指標
 pass_criteria: ""    # どの期間の結果で、基準モデルをどれだけ上回れば合格か(コスト控除後)
 max_variants: 0      # 試す選択肢の上限
 forward_min: ""      # フォワード検証の最低期間
-forward_pass: ""     # フォワード検証の成績面の合格基準
+forward_pass: ""     # フォワード検証の成績面の合格基準(対象銘柄全体での結果で判定)
+dispersion: ""       # 実際の資金・売買単位で模擬した成績の幅(憲法 第4章 条件3)
 exit_rule: ""        # 撤退の条件
 account: ""          # 特定口座/NISA
 ```
