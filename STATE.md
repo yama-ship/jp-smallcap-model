@@ -1,6 +1,6 @@
 # STATE(現況)
 
-- 最終更新:2026-11-23(Claude、会話:https://claude.ai/code/session_01W9r5sxHvBk2JnWH9fMmoQC)
+- 最終更新:2026-11-23(Claude、会話:https://claude.ai/code/session_01UR6KMfzJ9Jmh8hfoG9EYs3)
 - 新しい会話では、最初にこのファイルを読む。
 
 ## 現在のフェーズ
@@ -58,6 +58,10 @@
 - 復元と v1.1 の承認を行った会話のセッションは、リポジトリにつながらない(2026-11-23確認)。登録とこれ以降の作業は、claude.ai/code でリポジトリを選んで始めたセッションで行う
 - 作業用のClaudeのセッションを、記憶機能から切り離す方法
 - GitHubと接続したあと、Claudeの書き込みがオーナーとは別の名義で記録されるか
+  - 結果(2026-11-23、PR https://github.com/yama-ship/jp-smallcap-model/pull/1 で確認):**コミットは別の名義、PRはオーナーの名義**
+    - コミット:取り込んだ5つ(120a6c7〜7056727)と、このセッションのマージコミット(eaaa338)・STATE更新は、author・committer とも「Claude <noreply@anthropic.com>」。GitHub上は claude アカウントに結び付いて表示される。オーナーが作った 7e18b13 は author が yama-ship、committer が GitHub(web-flow)
+    - PR:GitHubのコネクタで作ったPRの作成者は、オーナーのアカウント(yama-ship)と記録された。PRのコメントやレビューも、同じくオーナー名義になると考えられる(未確認)
+    - 影響:誰が書いたかはコミットの名義で区別できる。PRの作成者欄では区別できないので、承認の証拠は「オーナーがマージしたこと」と、PR本文の Claude Code の署名で見る
 - ClaudeがGitHub Actionsの実行ログを読み、自分で修正を回せるか
 - GitHub ActionsからJ-Quantsに接続できるか
 - 市場データの保存先(削除できる場所)をどこにするか
@@ -76,7 +80,7 @@
 
 ### Claude
 
-1. この一式を履歴ごとリポジトリに登録するPRを作り、コミットの名義を確認する
+1. (済:PR https://github.com/yama-ship/jp-smallcap-model/pull/1 、名義は「未解決・要確認」に記録)オーナーのマージを待つ
 2. data_spec の草案(J-Quants API V2 の仕様、配当の扱い、較正の方式を含む)
 3. かぶミニの対象銘柄の範囲を調べる
 4. アイデア出しを始める
