@@ -1,6 +1,6 @@
 # STATE(現況)
 
-- 最終更新:2026-11-23(Claude、会話:https://claude.ai/code/session_01UR6KMfzJ9Jmh8hfoG9EYs3)
+- 最終更新:2026-11-24(Claude、会話:https://claude.ai/code/session_01UR6KMe7YA8toistPUt3xcj)
 - 新しい会話では、最初にこのファイルを読む。
 
 ## 現在のフェーズ
@@ -20,7 +20,7 @@
 ## 承認済みの版
 
 - CHARTER:v1.1(2026-11-23 承認、D-0023〜D-0025)
-- data_spec:なし
+- data_spec:草案 v0.1 を PR で提出中(オーナーの承認待ち)
 - 実験器:なし
 - 本番モデル:なし
 
@@ -46,7 +46,12 @@
 - J-Quantsの配当金情報(/fins/dividend)は、Premiumプランだけで取得できる。Standardでは取れない(J-Quants「契約ごとに利用可能なAPIとデータ格納期間」https://jpx-jquants.com/ja/spec/data-spec 、2026-11-11確認)
 - 無料プランで取れるのは、12週間前から2年12週間前までのデータ。CSVは使えず、APIのみ(同上)
 - 上場廃止した銘柄も、上場していた期間のデータは日付を指定すれば取れる。上場廃止日や上場廃止銘柄の一覧は提供されない(J-Quants Help「データ内容・仕様」https://jpx-jquants.com/ja/help/data 、2026-11-11確認)
-- 財務データの反映は18:00頃と24:30頃(Premium以外。同上)。株価の反映時刻は未確認
+- 財務データの反映は18:00頃と24:30頃(Premium以外。同上)。株価四本値の反映は当日16:30頃、上場銘柄一覧は翌営業日分が17:30頃から取れる(J-Quants「提供データの更新タイミング」https://jpx-jquants.com/en/spec/data-update 、2026-11-24確認)。更新時刻は保証されず、完了を通知するAPIはない
+- 株価の調整は株式分割・株式併合・ライツイシューが対象で、現金配当は含まれない。調整済み値は後続の企業行動で遡及して再計算されるため、時点で固定する分析では調整前の価格とAdjFactorから再現する(J-Quants「株価四本値」https://jpx-jquants.com/ja/spec/eq-bars-daily 、2026-11-24確認)
+- 取引が存在しない日(無約定・終日売買停止など)もレコードは返却され、四本値・取引高・売買代金が揃ってNullになる。取引高に0は入らない。無約定か売買停止かを区別する項目は提供されない(同上、2026-11-24確認)
+- 財務情報(/fins/summary)には、1株あたり配当の実績(Div1Q、Div2Q、Div3Q、DivFY、DivAnn)と予想(FDiv〜、NxFDiv〜)が含まれる(J-Quants「財務情報」https://jpx-jquants.com/ja/spec/fin-summary 、2026-11-24確認)
+- TOPIX四本値と指数四本値は、無料プランでは取得できない(上記 data-spec、2026-11-24確認)
+- レートリミットは、Free 5件/分、Light 60件/分、Standard 120件/分、Premium 500件/分(J-Quants「V1 API から V2 API への変更点」https://jpx-jquants.com/ja/spec/migration-v1-v2 、2026-11-24確認)
 - 楽天証券のかぶミニの寄付取引は、17:00〜翌8:45に注文し、翌営業日の前場寄付で約定する。成行のみ、手数料とスプレッドはかからず、NISA成長投資枠でも使える(楽天証券 https://www.rakuten-sec.co.jp/web/domestic/ols/ 、2026-11-11確認)。取扱銘柄数は公式ページでは確認できていない
 - この作業環境からは、J-QuantsとEDINETのAPIに直接つながらない(2026-11-11確認)。データの取得は、GitHub Actionsかオーナーのパソコンで行う
 - リポジトリは yama-ship/jp-smallcap-model(非公開)。ClaudeのGitHubアプリは「Only select repositories」でこのリポジトリだけに入っている。登録前のリポジトリには、オーナー側で作った README.md のコミット(7e18b13)が1つある(2026-11-23 の作業報告)
@@ -65,22 +70,26 @@
 - ClaudeがGitHub Actionsの実行ログを読み、自分で修正を回せるか
 - GitHub ActionsからJ-Quantsに接続できるか
 - 市場データの保存先(削除できる場所)をどこにするか
+  - data_spec 草案の第6節に案(一次保存はオーナーのパソコン、GitHub Actions は取得と計算だけに使い、中間データはキャッシュに入れて実行後に消す)を提示。PR の質問 Q3 でオーナーの判断待ち
 - 配当をどう扱うか(Premiumを使う、財務データの1株配当から近似する、など。data_spec で決める)
+  - data_spec 草案の第3節に案(財務情報の実績配当で近似し、権利落ち日は基準日の翌営業日とする)を提示。PR の質問 Q1 でオーナーの判断待ち
 - T日のデータを、その日の夜までに取得できるか
+  - 解決(2026-11-24確認し、data_spec 草案の第4節に記録):Standard では株価四本値が当日16:30頃に更新されるため、その日の夜に取得できる。Free では直近12週間自体が取得できないため不可で、較正は過去の窓で行う
 - かぶミニで、対象にしたい中小型株の何割が売買できるか(分散できるかと、1銘柄の上限50%を見直すかに関わる)
 - 較正の「既知の結果の再現」を、無料プランの2年分でどう判定するか(公開されている日本のファクターの月次リターンと突き合わせる方式を、data_spec で検討する)
+  - data_spec 草案の第5-2節に案(公開ファクターとの突き合わせ、HML は符号一致率と相関に下限、モメンタムは大きく逆行していないことの確認)を提示。PR の質問 Q2 でオーナーの判断待ち。較正計画そのもの(銘柄・期間・合格の目安の固定)は別途オーナーの承認が要る
 
 ## 次の行動
 
 ### オーナー
 
-1. 一式を登録するPRをマージする(方法は「Create a merge commit」。Squash と Rebase は履歴が消えるので選ばない)
-2. PRのマージ後、Google Drive に置いた受け渡し用のファイル(jp-smallcap-model_2026-11-23.bundle)を削除する
+1. (済:2026-11-24 に PR #1 を「Create a merge commit」でマージ。マージコミット 6082d68)
+2. (済:2026-11-24 に受け渡し用のファイル jp-smallcap-model_2026-11-23.bundle を Google Drive のゴミ箱へ移動)
 3. (最初の事前登録の審査までに)審査用のプロジェクトを作り、記憶機能から切り離す。指示欄に project_instructions/review.md の「ここから」以下を貼る
 
 ### Claude
 
 1. (済:PR https://github.com/yama-ship/jp-smallcap-model/pull/1 、名義は「未解決・要確認」に記録)オーナーのマージを待つ
-2. data_spec の草案(J-Quants API V2 の仕様、配当の扱い、較正の方式を含む)
+2. (済:data_spec 草案 v0.1 を PR で提出。オーナーの質問への回答とマージを待つ)
 3. かぶミニの対象銘柄の範囲を調べる
 4. アイデア出しを始める
