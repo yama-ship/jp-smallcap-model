@@ -1,6 +1,6 @@
 # STATE(現況)
 
-- 最終更新:2026-11-23(Claude、会話:https://claude.ai/code/session_01UR6KMfzJ9Jmh8hfoG9EYs3)
+- 最終更新:2026-11-24(Claude、会話:https://claude.ai/code/session_01UR6KMencQ76zSADRxdRD3p)
 - 新しい会話では、最初にこのファイルを読む。
 
 ## 現在のフェーズ
@@ -63,9 +63,11 @@
     - PR:GitHubのコネクタで作ったPRの作成者は、オーナーのアカウント(yama-ship)と記録された。PRのコメントやレビューも、同じくオーナー名義になると考えられる(未確認)
     - 影響:誰が書いたかはコミットの名義で区別できる。PRの作成者欄では区別できないので、承認の証拠は「オーナーがマージしたこと」と、PR本文の Claude Code の署名で見る
 - ClaudeがGitHub Actionsの実行ログを読み、自分で修正を回せるか
-  - 結果(2026-11-24):Actions の実行ログをブラウザ経由で読み、ステータス・件数・所要時間を確認できた。ワークフローの修正を回すところまでは今回未実施
+  - 結果(2026-11-24):jquants-probe の実行で、出力が secret_present=false だけだったことを、オーナー側のブラウザで確認した(オーナーの報告。Claude は確かめていない)
+  - 結果(2026-11-24、Claude が自分で確認):このセッションから実行ログを読めた。`gh run list` で実行2件(run 45345997932・45346264049、どちらも failure)が見え、`gh run view 45346264049 --log` と GitHub MCP の get_job_logs で、ログ本文(`secret_present=false`、exit code 1)を読めた。足りない権限・ツールはなかった
+  - 未確認:ログを読んで修正をプッシュし、再実行の結果まで自分で回すこと。Secret 登録後の接続確認で試す
 - GitHub ActionsからJ-Quantsに接続できるか
-  - 結果(2026-11-24):接続できなかった。Secrets に JQUANTS_API_KEY が設定されておらず、API を呼ぶ前に終了した。オーナーが J-Quants のダッシュボードで API キーを発行し、リポジトリの Secrets に JQUANTS_API_KEY を登録する必要がある
+  - 結果(2026-11-24):接続確認を実施したが、Secret(JQUANTS_API_KEY)が未登録のため未接続。オーナーが J-Quants のダッシュボードで API キーを発行し、リポジトリの Secrets に JQUANTS_API_KEY を登録する必要がある
 - 市場データの保存先(削除できる場所)をどこにするか
 - 配当をどう扱うか(Premiumを使う、財務データの1株配当から近似する、など。data_spec で決める)
 - T日のデータを、その日の夜までに取得できるか
@@ -86,4 +88,4 @@
 2. data_spec の草案(J-Quants API V2 の仕様、配当の扱い、較正の方式を含む)
 3. かぶミニの対象銘柄の範囲を調べる
 4. アイデア出しを始める
-5. 実験器の接続確認は済み(STATE の未解決の項)。次は較正のための取得処理を、data_spec に沿って GitHub Actions 上に作る
+5. オーナーが Secret(JQUANTS_API_KEY)を登録したら、jquants-probe を再実行して接続を確認する。成功したら、ワークフローと結果を1つの PR にまとめる(PR はそれまで作らない)。そのあと、較正のための取得処理を data_spec に沿って GitHub Actions 上に作る
