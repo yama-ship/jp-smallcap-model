@@ -65,9 +65,11 @@
 - ClaudeがGitHub Actionsの実行ログを読み、自分で修正を回せるか
   - 結果(2026-11-24):jquants-probe の実行で、出力が secret_present=false だけだったことを、オーナー側のブラウザで確認した(オーナーの報告。Claude は確かめていない)
   - 結果(2026-11-24、Claude が自分で確認):このセッションから実行ログを読めた。`gh run list` で実行2件(run 45345997932・45346264049、どちらも failure)が見え、`gh run view 45346264049 --log` と GitHub MCP の get_job_logs で、ログ本文(`secret_present=false`、exit code 1)を読めた。足りない権限・ツールはなかった
-  - 未確認:ログを読んで修正をプッシュし、再実行の結果まで自分で回すこと。Secret 登録後の接続確認で試す
+  - 結果(2026-11-24、Claude が自分で確認):`gh workflow run` で手動実行(run 45351663575)を起動し、`gh run watch` で完了を待ち、ログを読むところまで自分で回せた
+  - 未確認:ログを見てワークフローを修正し、再実行して直ったことを確かめる流れ。今回は修正が要らなかったので試していない
 - GitHub ActionsからJ-Quantsに接続できるか
-  - 結果(2026-11-24):接続確認を実施したが、Secret(JQUANTS_API_KEY)が未登録のため未接続。オーナーが J-Quants のダッシュボードで API キーを発行し、リポジトリの Secrets に JQUANTS_API_KEY を登録する必要がある
+  - 結果(2026-11-24):接続確認を実施したが、Secret(JQUANTS_API_KEY)が未登録のため未接続
+  - 結果(2026-11-24):オーナーが Secret を登録した(オーナーの報告)。その後、接続できた(Claude がログで確認)。run 45351480280(push)と run 45351663575(手動実行)のどちらも、secret_present=true、http_status=200、record_count=1(取引カレンダー 2026-09-01 の1日分)。ログに出したのは件数などだけで、取得したデータの中身は出していない
 - 市場データの保存先(削除できる場所)をどこにするか
 - 配当をどう扱うか(Premiumを使う、財務データの1株配当から近似する、など。data_spec で決める)
 - T日のデータを、その日の夜までに取得できるか
@@ -88,4 +90,4 @@
 2. data_spec の草案(J-Quants API V2 の仕様、配当の扱い、較正の方式を含む)
 3. かぶミニの対象銘柄の範囲を調べる
 4. アイデア出しを始める
-5. オーナーが Secret(JQUANTS_API_KEY)を登録したら、jquants-probe を再実行して接続を確認する。成功したら、ワークフローと結果を1つの PR にまとめる(PR はそれまで作らない)。そのあと、較正のための取得処理を data_spec に沿って GitHub Actions 上に作る
+5. jquants-probe のワークフローと接続確認の結果を1つの PR にまとめた(builder/jquants-actions-probe → main)。オーナーのマージを待つ。そのあと、較正のための取得処理を data_spec に沿って GitHub Actions 上に作る
