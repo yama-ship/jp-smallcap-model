@@ -1,0 +1,36 @@
+name: jquants-probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe J-Quants API (calendar, one day)
+        env:
+          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+        run: |
+          set -uo pipefail
+          if [ -z "${JQUANTS_API_KEY:-}" ]; then
+            echo "secret_present=false"
+            exit 1
+          fi
+          echo "secret_present=true"
+          start=$(date +%s)
+          http_code=$(curl -s -o /tmp/resp.json -w '%{http_code}' \
+            -H "x-api-key: ${JQUANTS_API_KEY}" \
+            'https://api.jquants.com/v2/markets/calendar?from=2026-09-01&to=2026-09-01')
+          elapsed=$(( $(date +%s) - start ))
+          count="unknown"
+          if [ -s /tmp/resp.json ]; then
+            count=$(python3 -c "import json;print(len(json.load(open('/tmp/resp.json')).get('data',[])))" 2>/dev/null || echo parse_error)
+          fi
+          rm -f /tmp/resp.json
+          echo "http_status=${http_code}"
+          echo "record_count=${count}"
+          echo "elapsed_seconds=${elapsed}"
+          [ "${http_code}" = "200" ]
