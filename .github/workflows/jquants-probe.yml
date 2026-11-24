@@ -2,8 +2,6 @@ name: jquants-probe
 
 on:
   workflow_dispatch:
-  push:
-    branches: [builder/jquants-actions-probe]
 
 permissions:
   contents: read

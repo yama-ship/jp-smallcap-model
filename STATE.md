@@ -90,4 +90,4 @@
 2. data_spec の草案(J-Quants API V2 の仕様、配当の扱い、較正の方式を含む)
 3. かぶミニの対象銘柄の範囲を調べる
 4. アイデア出しを始める
-5. jquants-probe のワークフローと接続確認の結果は PR #3(builder/jquants-actions-probe → main、2026-11-24 07:34 UTC 作成、作成した会話は不明)に入っている。PR 本文は接続成功の結果に書き換えた(2026-11-24、オーナーの指示)。オーナーのマージを待つ。そのあと、較正のための取得処理を data_spec に沿って GitHub Actions 上に作る
+5. jquants-probe のワークフローと接続確認の結果は PR #3(builder/jquants-actions-probe → main、2026-11-24 07:34 UTC 作成、作成した会話は不明)に入っている。PR 本文は接続成功の結果に書き換えた(2026-11-24、オーナーの指示)。push のトリガーはオーナーの指示で消し、手動実行だけにした。オーナーのマージを待つ。そのあと、較正のための取得処理を data_spec に沿って GitHub Actions 上に作る
