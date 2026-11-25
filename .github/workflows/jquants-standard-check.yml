@@ -1,0 +1,20 @@
+name: jquants-standard-check
+
+# Standard 契約後の接続確認(較正計画 第3-2節・第6節)。手動実行だけ。
+# ログに出すのは件数と割合だけ。データはファイルにもキャッシュにも保存しない。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Standard plan data (counts only)
+        env:
+          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+        run: python3 tools/checks/standard_check.py
