@@ -1,9 +1,13 @@
 name: jquants-standard-check
 
-# Standard 契約後の接続確認(較正計画 第3-2節・第6節)。手動実行だけ。
+# Standard 契約後の接続確認(較正計画 第3-2節・第6節)。
 # ログに出すのは件数と割合だけ。データはファイルにもキャッシュにも保存しない。
 on:
   workflow_dispatch:
+  # 一時的:main に入る前に一度動かすため。確認が済んだら外す
+  push:
+    branches: [ccr-d2518483-pugcav]
+    paths: [.github/workflows/jquants-standard-check.yml]
 
 permissions:
   contents: read
