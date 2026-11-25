@@ -76,7 +76,8 @@ def group_of(doctype):
     if len(parts) >= 3:
         cons = {"Consolidated": "連結", "NonConsolidated": "単体"}.get(parts[1], parts[1])
         return parts[2], cons
-    return "不明", "不明"
+    # 決算短信以外(業績予想の修正など)は、DocType の名前をそのまま区分にする
+    return (doctype or "空"), "-"
 
 
 def fetch_fins(start, end):
