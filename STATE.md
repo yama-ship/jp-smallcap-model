@@ -1,6 +1,6 @@
 # STATE(現況)
 
-- 最終更新:2026-11-24(Claude、会話:https://claude.ai/code/session_01UR6KMencQ76zSADRxdRD3p)
+- 最終更新:2026-11-25(Claude、会話:https://claude.ai/code/session_01UR6KMencQ76zSADRxdRD3p)
 - 新しい会話では、最初にこのファイルを読む。
 
 ## 現在のフェーズ
@@ -19,7 +19,7 @@
 
 ## 承認済みの版
 
-- CHARTER:v1.1(2026-11-23 承認、D-0023〜D-0025)
+- CHARTER:v1.1(2026-11-23 承認、D-0023〜D-0025)。v1.2(D-0029、Standard の前倒し)は PR #4 で承認待ち
 - data_spec:v0.2(D-0026)
 - 実験器:なし
 - 本番モデル:なし
@@ -55,7 +55,7 @@
 - 楽天証券のかぶミニの寄付取引は、17:00〜翌8:45に注文し、翌営業日の前場寄付で約定する。成行のみ、手数料とスプレッドはかからず、NISA成長投資枠でも使える(楽天証券 https://www.rakuten-sec.co.jp/web/domestic/ols/ 、2026-11-11確認)。取扱銘柄数は公式ページでは確認できていない
 - この作業環境からは、J-QuantsとEDINETのAPIに直接つながらない(2026-11-11確認)。データの取得は、GitHub Actionsかオーナーのパソコンで行う
 - リポジトリは yama-ship/jp-smallcap-model(非公開)。ClaudeのGitHubアプリは「Only select repositories」でこのリポジトリだけに入っている。登録前のリポジトリには、オーナー側で作った README.md のコミット(7e18b13)が1つある(2026-11-23 の作業報告)
-- J-Quantsは無料プランで登録済み(2026-11-23、Googleアカウントでサインイン)。APIキーはまだ発行していない
+- J-Quantsは無料プランで登録済み(2026-11-23、Googleアカウントでサインイン)。APIキーは発行して GitHub Secrets(JQUANTS_API_KEY)に登録済み(オーナーの報告、2026-11-24)。Actions からの接続は Claude が確認済み(PR #3)
 - J-Quants API V2 は、ダッシュボードの「API Keys」画面で発行するAPIキーを、x-api-key ヘッダーに付けて使う(J-Quants クイックスタート https://jpx-jquants.com/ja/spec/quickstart 、2026-11-23確認)。メールアドレスとパスワードでの認証は前提にしない
 - Kenneth R. French Data Library に、Japanese 3 Factors の日次版と Japanese Momentum Factor の日次版がある(Data Library 本体で確認、2026-11-24)
 - French の国際ファクターのリターンは米ドル建てで配当を含み、市場ファクターは米国の1か月物 T-bill レートを差し引いたもの(ファクター説明ページ Description of Fama/French Factors で確認、2026-11-24)
@@ -79,7 +79,7 @@
   - 結果(2026-11-24):接続確認を実施したが、Secret(JQUANTS_API_KEY)が未登録のため未接続
   - 結果(2026-11-24):オーナーが Secret を登録した(オーナーの報告)。その後、接続できた(Claude がログで確認)。run 45351480280(push)と run 45351663575(手動実行)のどちらも、secret_present=true、http_status=200、record_count=1(取引カレンダー 2026-09-01 の1日分)。ログに出したのは件数などだけで、取得したデータの中身は出していない
 - (解決 2026-11-24)作業環境から文書ページに接続できなかった件:オーナーの承認で、個人用の環境「jp-smallcap-model」を作り、docs.github.com・mba.tuck.dartmouth.edu・jpx-jquants.com の3つだけを名指しで許可した。api.jquants.com は許可していない(Claude が接続を試して確認)。原本で確かめた内容は、calibration_plan.md 第7節と data_spec 第6節に引用した
-- Actions のキャッシュは、7日間アクセスがないと消える(GitHub の原本で確認、2026-11-24)。data_spec v0.3 で、毎日読むだけの定期実行を置く案にした(D-0028 として PR #4 で承認待ち)
+- Actions のキャッシュは、7日間アクセスがないと消える(GitHub の原本で確認、2026-11-24)。延命の定期実行と保持日数の延長はせず、消えたら Standard で取り直す(オーナーの回答 2026-11-25、D-0028 として PR #4 で承認待ち)。較正の取得期間(2017-02-01〜)を全部取り直せるのは 2027-02-01 まで(calibration_plan.md 第1節)
 - 市場データの保存先(削除できる場所)をどこにするか
   - 2026-11-24 にオーナーが回答し(Q3)、data_spec 草案 v0.2 の第6節に反映済み(GitHub Actions 上で取得し、Actions のキャッシュに置く。オーナーのパソコンは日常の流れに入れない)。2026-11-24 に PR #2 のマージで確定(D-0026、main の 6710b3a で Claude が確認)
 - 配当をどう扱うか(Premiumを使う、財務データの1株配当から近似する、など。data_spec で決める)
@@ -98,7 +98,7 @@
 1. (済:2026-11-24 に PR #1 を「Create a merge commit」でマージ。マージコミット 6082d68)
 2. (済:2026-11-24 に受け渡し用のファイル jp-smallcap-model_2026-11-23.bundle を Google Drive のゴミ箱へ移動)
 3. (済:2026-11-24 に PR #2 をマージ。data_spec v0.2 を承認、D-0026。マージコミット 6710b3a)
-3a. PR #4 の質問 Q1〜Q5 に答え、マージする(D-0027、D-0028)。較正用データの最初の取得は 2026-12-24 までに行う必要がある(calibration_plan.md 第1節)
+3a. PR #4 の質問 Q1 に答え、マージする(D-0027〜D-0029、憲法 v1.2)。そのあと J-Quants Standard を契約する(D-0029)。契約したら Claude に知らせる
 4. (最初の事前登録の審査までに)審査用のプロジェクトを作り、記憶機能から切り離す。指示欄に project_instructions/review.md の「ここから」以下を貼る
 
 ### Claude
@@ -108,5 +108,5 @@
 3. かぶミニの対象銘柄の範囲を調べる
 4. アイデア出しを始める
 5. (済:jquants-probe のワークフローと接続確認の結果。PR #3 を 2026-11-24 にオーナーがマージ、マージコミット df6ec7a。push のトリガーはオーナーの指示で消し、手動実行だけ)
-6. (作業中:較正計画 v0.2 と data_spec v0.3 を PR #4 にした(D-0027、D-0028)。オーナーの回答とマージを待つ)較正計画の草案を作る(対象銘柄・期間・合格の目安。オーナーの承認が要る。data_spec 第10節の未解決:Actions キャッシュの容量上限と自動失効の条件、French ファクターの入手手順も、このとき確かめる)。作業は ccr-d2518483-pugcav で続け、このブランチにある STATE.md の更新(c8617a1 など)も、較正計画の草案と一緒に1つの PR にする(2026-11-24、オーナーの指示)
-7. 較正のための取得処理を、data_spec v0.2 に沿って GitHub Actions 上に作る
+6. (作業中:較正計画 v0.3、data_spec v0.3、憲法 v1.2、手計算用の取得スクリプト(tools/handcalc/)を PR #4 にした(D-0027〜D-0029)。2026-11-25 のオーナーの回答 Q1〜Q5 を反映済み。残る質問 Q1 の回答とマージを待つ)
+7. Standard の契約後に、GitHub Actions から 2017年の日付のデータが取れることを確かめる(件数だけ)。そのあと、較正のための取得処理を data_spec v0.3 と較正計画に沿って GitHub Actions 上に作る(キャッシュは main で作る)
