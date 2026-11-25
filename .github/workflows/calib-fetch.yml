@@ -1,0 +1,95 @@
+name: calib-fetch
+
+# 較正用の市場データを取得し、Actions のキャッシュに置く(較正計画 第1節、data_spec 第6節)。
+# - 手動実行(workflow_dispatch)だけで動かす。
+# - 同時に2つ動かない(concurrency)。
+# - データの種類 × 年ごとにキャッシュを分け、できた単位から保存する。もう一度動かすと、済んだ単位は飛ばす。
+# - ログに出すのは、件数・ハッシュ値・リクエスト数・かかった時間だけ。
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "取得の始まり(較正計画の取得期間の中)"
+        default: "2017-02-01"
+      end:
+        description: "取得の終わり(較正計画の取得期間の中)"
+        default: "2020-06-30"
+  # 一時的:作業用ブランチでの試運転のため(2019-03-01〜2019-03-07)。PR の前に外す
+  push:
+    branches: [ccr-d2518483-pugcav]
+    paths: [.github/workflows/calib-fetch.yml, tools/fetch/**]
+
+concurrency:
+  group: calib-fetch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        env:
+          IN_START: ${{ inputs.start }}
+          IN_END: ${{ inputs.end }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            IN_START=2019-03-01; IN_END=2019-03-07
+          fi
+          echo "range=${IN_START}..${IN_END}"
+          echo "matrix=$(python3 tools/fetch/plan_units.py "$IN_START" "$IN_END")" >> "$GITHUB_OUTPUT"
+
+  fetch:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      max-parallel: 1
+      fail-fast: true
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    name: fetch ${{ matrix.dataset }} ${{ matrix.start }}..${{ matrix.end }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: lookup
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ matrix.path }}
+          key: ${{ matrix.key }}
+          lookup-only: true
+      - if: steps.lookup.outputs.cache-hit == 'true'
+        run: echo "SKIP ${{ matrix.key }}(キャッシュにあるので取得しない)"
+      - if: steps.lookup.outputs.cache-hit != 'true'
+        env:
+          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+        run: >
+          python3 tools/fetch/calib_fetch.py --dataset "${{ matrix.dataset }}"
+          --start "${{ matrix.start }}" --end "${{ matrix.end }}" --out "${{ matrix.path }}"
+      - if: steps.lookup.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ matrix.path }}
+          key: ${{ matrix.key }}
+
+  usage:
+    needs: fetch
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache usage (stop if over 5GB, data_spec 第6節)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/actions/cache/usage" > usage.json
+          python3 -c "
+          import json,sys
+          u=json.load(open('usage.json'))
+          b=u.get('active_caches_size_in_bytes',0); n=u.get('active_caches_count',0)
+          print('cache_usage bytes=%d count=%d' % (b,n))
+          sys.exit(1 if b > 5*1024**3 else 0)
+          "
