@@ -14,10 +14,6 @@ on:
       end:
         description: "取得の終わり(較正計画の取得期間の中)"
         default: "2020-06-30"
-  # 一時的:作業用ブランチでの試運転のため(2019-03-01〜2019-03-07)。PR の前に外す(2回目:済んだ単位を飛ばすかの確認)
-  push:
-    branches: [ccr-d2518483-pugcav]
-    paths: [.github/workflows/calib-fetch.yml, tools/fetch/**]
 
 concurrency:
   group: calib-fetch
@@ -39,9 +35,6 @@ jobs:
           IN_START: ${{ inputs.start }}
           IN_END: ${{ inputs.end }}
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            IN_START=2019-03-01; IN_END=2019-03-07
-          fi
           echo "range=${IN_START}..${IN_END}"
           echo "matrix=$(python3 tools/fetch/plan_units.py "$IN_START" "$IN_END")" >> "$GITHUB_OUTPUT"
 
@@ -81,15 +74,16 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Cache usage (stop if over 5GB, data_spec 第6節)
+      # 使用量の API(actions/cache/usage)は更新が遅れることがあったため(試運転、2026-11-25)、
+      # キャッシュの一覧の大きさを合計する。5GB を超えたら失敗にする(data_spec 第6節)
+      - name: Cache size (stop if over 5GB)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/${{ github.repository }}/actions/cache/usage" > usage.json
-          python3 -c "
-          import json,sys
-          u=json.load(open('usage.json'))
-          b=u.get('active_caches_size_in_bytes',0); n=u.get('active_caches_count',0)
-          print('cache_usage bytes=%d count=%d' % (b,n))
-          sys.exit(1 if b > 5*1024**3 else 0)
-          "
+          gh api --paginate "repos/${{ github.repository }}/actions/caches?per_page=100" \
+            --jq '.actions_caches[] | "\(.size_in_bytes) \(.key)"' > caches.txt
+          total=$(awk '{s+=$1} END {print s+0}' caches.txt)
+          calib=$(awk '$2 ~ /^calib-/ {s+=$1; n++} END {printf "%d %d", s+0, n+0}' caches.txt)
+          echo "cache_total bytes=${total} count=$(wc -l < caches.txt)"
+          echo "cache_calib bytes_count=${calib}"
+          [ "$total" -le $((5*1024*1024*1024)) ]

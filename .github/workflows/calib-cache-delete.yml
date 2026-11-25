@@ -12,10 +12,6 @@ on:
       confirm:
         description: "削除してよければ delete と入力"
         required: true
-  # 一時的:作業用ブランチの試運転のキャッシュを消すため。PR の前に外す
-  push:
-    branches: [ccr-d2518483-pugcav]
-    paths: [.github/workflows/calib-cache-delete.yml]
 
 concurrency:
   group: calib-fetch
@@ -33,9 +29,6 @@ jobs:
           IN_REF: ${{ inputs.ref }}
           IN_CONFIRM: ${{ inputs.confirm }}
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            IN_REF="refs/heads/ccr-d2518483-pugcav"; IN_CONFIRM=delete
-          fi
           [ "$IN_CONFIRM" = "delete" ] || { echo "confirm が delete でないので消さない"; exit 1; }
           gh api --paginate "repos/${{ github.repository }}/actions/caches?ref=${IN_REF}&key=calib-&per_page=100" \
             --jq '.actions_caches[] | "\(.id) \(.key) \(.size_in_bytes)"' > caches.txt
