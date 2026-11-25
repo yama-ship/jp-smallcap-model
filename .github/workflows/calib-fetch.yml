@@ -14,7 +14,7 @@ on:
       end:
         description: "取得の終わり(較正計画の取得期間の中)"
         default: "2020-06-30"
-  # 一時的:作業用ブランチでの試運転のため(2019-03-01〜2019-03-07)。PR の前に外す
+  # 一時的:作業用ブランチでの試運転のため(2019-03-01〜2019-03-07)。PR の前に外す(2回目:済んだ単位を飛ばすかの確認)
   push:
     branches: [ccr-d2518483-pugcav]
     paths: [.github/workflows/calib-fetch.yml, tools/fetch/**]
