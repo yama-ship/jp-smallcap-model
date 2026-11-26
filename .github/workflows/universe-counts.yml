@@ -4,6 +4,9 @@ name: universe-counts
 # 較正計画 第3-1節の対象銘柄の定義のため。ログに出すのは件数だけ。
 on:
   workflow_dispatch:
+  push:
+    branches: [ccr-d2518483-pugcav]
+    paths: [.github/workflows/universe-counts.yml, tools/checks/universe_counts.py]
 
 permissions:
   contents: read
