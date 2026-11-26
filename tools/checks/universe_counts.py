@@ -46,6 +46,11 @@ def main():
         print("- 上場銘柄一覧の合計: %d" % len(master))
         dom = [r for r in master if r.get("ProdCat") == "011"]
         print("- 内国株券(011)のうち、コードの5桁目が 0 でないもの: %d" % sum(1 for r in dom if str(r.get("Code", ""))[-1:] != "0"))
+        s33 = collections.Counter(r.get("S33", "") for r in dom)
+        print("- 内国株券(011)のうち、33業種コードが 9999(その他)のもの: %d、空のもの: %d" % (s33.get("9999", 0), s33.get("", 0)))
+        print("- 内国株券(011)の規模区分ごとの件数: " + "、".join("%s=%d" % kv for kv in sorted(collections.Counter(r.get("ScaleCat", "") for r in dom).items())))
+        print("- 内国株券(011)の市場区分ごとの、コードの5桁目が 0 でないもの: " + "、".join("%s=%d" % kv for kv in sorted(collections.Counter(r.get("Mkt", "") for r in dom if str(r.get("Code", ""))[-1:] != "0").items())))
+        print("- 内国株券以外の33業種コードの件数: " + "、".join("%s/%s=%d" % (k[0], k[1], v) for k, v in sorted(collections.Counter((r.get("ProdCat", ""), r.get("S33", "")) for r in master if r.get("ProdCat") != "011").items())))
         bp = find("bars", d)
         if bp:
             bars = load(bp)
