@@ -1,0 +1,41 @@
+name: calib-cache-delete
+
+# 較正用データのキャッシュを削除する(data_spec 第6節の削除の手順)。
+# 指定したブランチ(ref)で作られた、キーが calib- で始まるキャッシュだけを消す。
+# ログに出すのは、消したキャッシュのキーと件数だけ(キーには市場データを含まない)。
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "キャッシュを作ったブランチ(例 refs/heads/main)"
+        required: true
+      confirm:
+        description: "削除してよければ delete と入力"
+        required: true
+
+concurrency:
+  group: calib-fetch
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          IN_REF: ${{ inputs.ref }}
+          IN_CONFIRM: ${{ inputs.confirm }}
+        run: |
+          [ "$IN_CONFIRM" = "delete" ] || { echo "confirm が delete でないので消さない"; exit 1; }
+          gh api --paginate "repos/${{ github.repository }}/actions/caches?ref=${IN_REF}&key=calib-&per_page=100" \
+            --jq '.actions_caches[] | "\(.id) \(.key) \(.size_in_bytes)"' > caches.txt
+          echo "対象: $(wc -l < caches.txt) 件、合計 $(awk '{s+=$3} END {print s+0}' caches.txt) バイト(ref=${IN_REF})"
+          while read -r id key size; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/caches/${id}" && echo "deleted ${key}"
+          done < caches.txt
+          left=$(gh api "repos/${{ github.repository }}/actions/caches?ref=${IN_REF}&key=calib-" --jq '.total_count')
+          echo "残り: ${left} 件"
+          [ "$left" = "0" ]

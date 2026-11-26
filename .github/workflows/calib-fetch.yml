@@ -1,0 +1,89 @@
+name: calib-fetch
+
+# 較正用の市場データを取得し、Actions のキャッシュに置く(較正計画 第1節、data_spec 第6節)。
+# - 手動実行(workflow_dispatch)だけで動かす。
+# - 同時に2つ動かない(concurrency)。
+# - データの種類 × 年ごとにキャッシュを分け、できた単位から保存する。もう一度動かすと、済んだ単位は飛ばす。
+# - ログに出すのは、件数・ハッシュ値・リクエスト数・かかった時間だけ。
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "取得の始まり(較正計画の取得期間の中)"
+        default: "2017-02-01"
+      end:
+        description: "取得の終わり(較正計画の取得期間の中)"
+        default: "2020-06-30"
+
+concurrency:
+  group: calib-fetch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        env:
+          IN_START: ${{ inputs.start }}
+          IN_END: ${{ inputs.end }}
+        run: |
+          echo "range=${IN_START}..${IN_END}"
+          echo "matrix=$(python3 tools/fetch/plan_units.py "$IN_START" "$IN_END")" >> "$GITHUB_OUTPUT"
+
+  fetch:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      max-parallel: 1
+      fail-fast: true
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    name: fetch ${{ matrix.dataset }} ${{ matrix.start }}..${{ matrix.end }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: lookup
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ matrix.path }}
+          key: ${{ matrix.key }}
+          lookup-only: true
+      - if: steps.lookup.outputs.cache-hit == 'true'
+        run: echo "SKIP ${{ matrix.key }}(キャッシュにあるので取得しない)"
+      - if: steps.lookup.outputs.cache-hit != 'true'
+        env:
+          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+        run: >
+          python3 tools/fetch/calib_fetch.py --dataset "${{ matrix.dataset }}"
+          --start "${{ matrix.start }}" --end "${{ matrix.end }}" --out "${{ matrix.path }}"
+      - if: steps.lookup.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ matrix.path }}
+          key: ${{ matrix.key }}
+
+  usage:
+    needs: fetch
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # 使用量の API(actions/cache/usage)は更新が遅れることがあったため(試運転、2026-11-25)、
+      # キャッシュの一覧の大きさを合計する。5GB を超えたら失敗にする(data_spec 第6節)
+      - name: Cache size (stop if over 5GB)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/actions/caches?per_page=100" \
+            --jq '.actions_caches[] | "\(.size_in_bytes) \(.key)"' > caches.txt
+          total=$(awk '{s+=$1} END {print s+0}' caches.txt)
+          calib=$(awk '$2 ~ /^calib-/ {s+=$1; n++} END {printf "%d %d", s+0, n+0}' caches.txt)
+          echo "cache_total bytes=${total} count=$(wc -l < caches.txt)"
+          echo "cache_calib bytes_count=${calib}"
+          [ "$total" -le $((5*1024*1024*1024)) ]
