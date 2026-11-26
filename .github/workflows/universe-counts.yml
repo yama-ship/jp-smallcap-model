@@ -1,0 +1,56 @@
+name: universe-counts
+
+# 上場銘柄一覧と株価四本値のキャッシュ(main で作ったもの)を読み、区分ごとの件数を出す。
+# 較正計画 第3-1節の対象銘柄の定義のため。ログに出すのは件数だけ。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/master/2017-02-01_2017-12-31
+          key: calib-v1-master-2017-02-01-2017-12-31
+          fail-on-cache-miss: true
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/master/2018-01-01_2018-12-31
+          key: calib-v1-master-2018-01-01-2018-12-31
+          fail-on-cache-miss: true
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/master/2019-01-01_2019-12-31
+          key: calib-v1-master-2019-01-01-2019-12-31
+          fail-on-cache-miss: true
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/master/2020-01-01_2020-06-30
+          key: calib-v1-master-2020-01-01-2020-06-30
+          fail-on-cache-miss: true
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/bars/2017-02-01_2017-12-31
+          key: calib-v1-bars-2017-02-01-2017-12-31
+          fail-on-cache-miss: true
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/bars/2018-01-01_2018-12-31
+          key: calib-v1-bars-2018-01-01-2018-12-31
+          fail-on-cache-miss: true
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/bars/2019-01-01_2019-12-31
+          key: calib-v1-bars-2019-01-01-2019-12-31
+          fail-on-cache-miss: true
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/bars/2020-01-01_2020-06-30
+          key: calib-v1-bars-2020-01-01-2020-06-30
+          fail-on-cache-miss: true
+      - run: python3 tools/checks/universe_counts.py data
